@@ -1,0 +1,45 @@
+const express = require('express');
+const mysql = require('mysql2');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// PASTE YOUR TiDB DETAILS HERE
+const connection = mysql.createConnection({
+    host: 'your-tidb-hostname.tidbcloud.com',
+    port: 4000,
+    user: 'your_username.root',
+    password: 'your_password',
+    database: 'campus_finder',
+    ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true
+    }
+});
+
+// Route 1: Get all items
+app.get('/items', (req, res) => {
+    connection.query('SELECT * FROM lost_items ORDER BY created_at DESC', (err, results) => {
+        if (err) return res.status(500).send(err);
+        res.json(results);
+    });
+});
+
+// Route 2: Add new item
+app.post('/add', (req, res) => {
+    const { item_name, category, location, contact } = req.body;
+    const sql = "INSERT INTO lost_items (item_name, category, location_found, finder_contact) VALUES (?, ?, ?, ?)";
+    connection.query(sql, [item_name, category, location, contact], (err, result) => {
+        if (err) return res.status(500).send(err);
+        res.send("Success");
+    });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
