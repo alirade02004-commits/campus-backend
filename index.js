@@ -1,40 +1,38 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
 
-// PASTE YOUR TiDB DETAILS HERE
+app.get('/', (req, res) => {
+    res.send("Backend is Live");
+});
+
 const connection = mysql.createConnection({
-    host: 'your-tidb-hostname.tidbcloud.com',
+    host: 'YOUR_TIDB_HOST', 
     port: 4000,
-    user: 'your_username.root',
-    password: 'your_password',
+    user: 'YOUR_TIDB_USER',
+    password: 'YOUR_TIDB_PASSWORD',
     database: 'campus_finder',
     ssl: {
-        minVersion: 'TLSv1.2',
         rejectUnauthorized: true
     }
 });
 
-// Route 1: Get all items
 app.get('/items', (req, res) => {
     connection.query('SELECT * FROM lost_items ORDER BY created_at DESC', (err, results) => {
-        if (err) return res.status(500).send(err);
+        if (err) return res.status(500).json(err);
         res.json(results);
     });
 });
 
-// Route 2: Add new item
 app.post('/add', (req, res) => {
     const { item_name, category, location, contact } = req.body;
     const sql = "INSERT INTO lost_items (item_name, category, location_found, finder_contact) VALUES (?, ?, ?, ?)";
     connection.query(sql, [item_name, category, location, contact], (err, result) => {
-        if (err) return res.status(500).send(err);
+        if (err) return res.status(500).json(err);
         res.send("Success");
     });
 });
